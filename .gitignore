@@ -1,0 +1,17 @@
+# Your CV content stays on your machine. The toolkit is the shared part.
+full_cv.md
+application_log.csv
+applications/*
+!applications/.gitkeep
+
+# Fonts you embed yourself — licences vary, so they aren't shared by default.
+fonts/*.ttf
+fonts/*.otf
+fonts/fonts.json
+
+# Housekeeping
+.claude/
+__pycache__/
+*.pyc
+.DS_Store
+._cv_optimizer_probe.html

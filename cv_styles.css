@@ -1,0 +1,92 @@
+/* cv_styles.css — no fonts are embedded in the public toolkit.
+   Body text falls back to the system sans-serif stack. To embed
+   a font of your own: python3 cv_addfont.py path/to/font.ttf
+   See fonts/README.md. */
+:root{
+  --blue:#2f7dc4;
+  --gray:#8a8a8a;
+  --ink:#2f2f2f;
+  --muted:#6f6f6f;
+  --line:#dcdcdc;
+  --chip:#c9c9c9;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:#eee;color:var(--ink);
+  font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;letter-spacing:-.3px;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+
+/* ---- page: shows a US-Letter sheet on screen; edge-to-edge in print ---- */
+.page{width:8.5in;min-height:11in;margin:18px auto;padding:0.5in 0.55in;
+  background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.15);}
+@page{size:letter;margin:0.5in;}
+@media print{
+  html,body{background:#fff;}
+  .page{width:auto;min-height:0;margin:0;padding:0;box-shadow:none;}
+}
+
+/* ---- header ---- */
+.name{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:400;font-size:31px;
+  letter-spacing:-.2px;text-transform:uppercase;color:#222;margin:0 0 1px;line-height:1.05;}
+.headline{color:var(--blue);font-size:14px;font-weight:400;margin:0 0 8px;}
+.contact{display:flex;flex-wrap:wrap;gap:3px 15px;font-size:11px;color:var(--muted);
+  padding-bottom:8px;border-bottom:1px solid var(--line);}
+.contact span{display:inline-flex;align-items:center;gap:5px;}
+.contact a{color:var(--muted);text-decoration:none;}
+.contact svg{width:12px;height:12px;fill:var(--gray);flex:none;}
+
+/* ---- two columns ---- */
+.cols{display:flex;gap:26px;align-items:flex-start;margin-top:6px;}
+.main{flex:1 1 64%;min-width:0;}
+.side{flex:0 0 30%;min-width:0;}
+
+/* ---- section headers ---- */
+.sec{text-transform:uppercase;color:var(--gray);font-size:10px;font-weight:400;
+  letter-spacing:.7px;border-bottom:1px solid var(--line);
+  padding:0 0 3px;margin:14px 0 6px;break-after:avoid;}
+.sec:first-child{margin-top:2px;}
+
+/* ---- summary ---- */
+p.sum{font-size:11px;line-height:1.4;margin:2px 0 4px;}
+
+/* ---- experience / education entries ---- */
+.entry{break-inside:avoid;margin-bottom:7px;}
+.role{font-weight:500;font-size:12px;color:#242424;margin:0 0 1px;}
+.meta{font-size:10px;margin:0 0 3px;display:flex;flex-wrap:wrap;gap:0 12px;align-items:center;}
+.meta .org{color:var(--blue);}
+.meta .bit{color:var(--muted);display:inline-flex;align-items:center;gap:4px;}
+.meta svg{width:11px;height:11px;fill:var(--gray);flex:none;}
+.proj{font-size:10.5px;color:#3d3d3d;font-style:italic;margin:0 0 2px;}
+ul{margin:2px 0 3px;padding-left:15px;}
+li{font-size:10.5px;line-height:1.35;margin-bottom:2px;}
+.compact{font-size:10.5px;line-height:1.38;margin:0 0 5px;}
+.compact .r{font-weight:500;color:#242424;}
+
+/* ---- publications ---- */
+.metrics{font-size:10px;color:var(--muted);margin:0 0 5px;}
+ol.pubs{margin:2px 0 0;padding-left:16px;}
+ol.pubs li{font-size:10px;line-height:1.36;margin-bottom:5px;break-inside:avoid;}
+ol.pubs b{font-weight:700;color:#242424;}
+.venue{font-style:italic;}
+
+/* ---- conferences / lists ---- */
+.subhead{font-size:10.5px;font-weight:500;color:#242424;margin:5px 0 2px;}
+.list{font-size:10px;line-height:1.4;margin:0 0 3px;padding-left:15px;}
+.list li{margin-bottom:1.5px;}
+
+/* ---- key achievements (sidebar) ---- */
+.ach{display:flex;gap:8px;margin:8px 0;break-inside:avoid;}
+.ach .ic{flex:none;width:23px;height:23px;border-radius:50%;background:#eaf1fa;
+  display:flex;align-items:center;justify-content:center;}
+.ach .ic svg{width:12px;height:12px;fill:var(--blue);}
+.ach h4{font-size:11px;font-weight:500;margin:1px 0 1px;color:#242424;line-height:1.2;}
+.ach p{font-size:10px;line-height:1.35;margin:0;color:var(--muted);}
+
+/* ---- skills (sidebar chips) ---- */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px;}
+.chip{border:1px solid var(--chip);border-radius:4px;padding:3px 8px;
+  font-size:10.5px;color:#242424;}
+
+/* ---- awards (sidebar) ---- */
+.award{font-size:10px;line-height:1.35;margin-bottom:6px;break-inside:avoid;}
+.award b{font-weight:500;color:#242424;}
+
