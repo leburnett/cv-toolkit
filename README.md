@@ -457,6 +457,30 @@ extra columns you add yourself survive, and the file is written atomically so
 an interrupted run can't leave it half-written. It is git-ignored: your
 application history stays on your machine.
 
+### Editing it
+
+It is an ordinary CSV, and the toolkit is built around you editing it:
+
+- **Add your own columns** — an `Interview date`, a `Salary range`, whatever
+  you want. They survive every rebuild.
+- **Anything you type by hand is never overwritten**, including by
+  `--log-company` and friends, which only fill blanks.
+- **Multi-line notes are fine** — a cell can hold line breaks.
+
+Only `Date CV created` and `CV file used` are written by the tool.
+
+**One trap, on macOS.** Double-clicking the CSV opens it in Numbers, and
+pressing Cmd-S there saves a *separate* `.numbers` file while leaving the CSV
+untouched — so your edits never reach the log. Either:
+
+- edit it in a plain text editor or VS Code (simplest, nothing to convert), or
+- in Numbers, use **File → Export To → CSV** and overwrite the original, or
+- in Excel or Sheets, **Save As / Download as CSV**.
+
+If the toolkit spots a `.numbers` or `.xlsx` sitting next to the CSV that is
+*newer* than it, it says so during a build, on the assumption you edited
+there and forgot to export. Those files are git-ignored.
+
 Don't leave it open in Excel while a build runs — Excel holding a stale copy
 and re-saving it is the one way to lose an edit.
 

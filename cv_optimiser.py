@@ -245,6 +245,26 @@ LOG_COLUMNS = [
 AUTO_COLUMNS = ("Date CV created", "CV file used")
 
 
+def warn_if_spreadsheet_newer(log_path: Path) -> None:
+    """Spot edits made in Numbers/Excel that never reached the CSV.
+
+    Double-clicking a .csv on macOS opens it in Numbers, and Cmd-S there
+    writes a .numbers file, silently leaving the .csv untouched. You then
+    believe you have recorded an outcome that the log does not actually
+    contain. If a sibling spreadsheet is newer than the CSV, say so.
+    """
+    if not log_path.exists():
+        return
+    csv_mtime = log_path.stat().st_mtime
+    for suffix in (".numbers", ".xlsx", ".xls", ".ods"):
+        sibling = log_path.with_suffix(suffix)
+        if sibling.exists() and sibling.stat().st_mtime > csv_mtime:
+            print(f"NOTE: {sibling.name} is newer than {log_path.name}. If you edited it "
+                  f"there, export back to CSV or those changes aren't in the log.",
+                  file=sys.stderr)
+            return
+
+
 def update_application_log(log_path: Path, cv_filename: str, date_str: str | None = None,
                             company: str | None = None, role: str | None = None,
                             url: str | None = None, deadline: str | None = None) -> str:
@@ -254,6 +274,7 @@ def update_application_log(log_path: Path, cv_filename: str, date_str: str | Non
     happened. Never discards columns or rows it doesn't recognise: if you add
     your own columns in a spreadsheet, they survive.
     """
+    warn_if_spreadsheet_newer(log_path)
     date_str = date_str or _dt.date.today().isoformat()
     supplied = {
         "Company": company, "Role": role,

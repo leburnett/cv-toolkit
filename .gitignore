@@ -9,6 +9,12 @@ fonts/*.ttf
 fonts/*.otf
 fonts/fonts.json
 
+# Spreadsheet versions of the log — edit the CSV, not these
+*.numbers
+*.xlsx
+*.xls
+*.ods
+
 # Housekeeping
 .claude/
 __pycache__/
