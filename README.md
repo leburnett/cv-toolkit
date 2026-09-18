@@ -16,9 +16,40 @@ python3 cv_new.py 2026-10_acme_data-analyst
 python3 cv_build.py applications/2026-10_acme_data-analyst --max-pages 2 --pdf
 ```
 
-Requirements: Python 3.10+, PyYAML (`pip install pyyaml`), and Google Chrome
-or any Chromium build. Chrome is used headlessly to measure real page counts
-and write PDFs, so the page fitting is measured rather than estimated.
+### Requirements
+
+Python 3.10+, PyYAML, and Google Chrome (or any Chromium build). Chrome is
+used headlessly to measure real page counts and write PDFs, so the page
+fitting is measured rather than estimated.
+
+Check what you have:
+
+```bash
+python3 --version                                   # want 3.10 or newer
+python3 -c "import yaml; print('pyyaml ok')"        # error means it's missing
+ls /Applications/Google\ Chrome.app >/dev/null && echo "chrome ok"
+```
+
+Install PyYAML if that middle line errored:
+
+```bash
+python3 -m pip install pyyaml
+```
+
+(`python3 -m pip` rather than plain `pip` — it guarantees you install into
+the same Python you'll run the scripts with.)
+
+### Check it works before you invest any time
+
+```bash
+python3 cv_new.py test-run
+python3 cv_build.py applications/test-run --max-pages 2 --pdf
+open applications/test-run/cv.pdf     # macOS; use xdg-open on Linux
+rm -rf applications/test-run          # tidy up
+```
+
+You should get a two-page PDF of placeholder text. If that works, everything
+is wired up correctly.
 
 ---
 
@@ -61,6 +92,10 @@ Edit `cv_template.md` once: name, contact details, education, anything else
 that won't change between applications. Every new application starts as a copy
 of it, so you are trimming rather than filling in a blank form.
 
+```bash
+open -e cv_template.md     # macOS TextEdit; any plain-text editor is fine
+```
+
 ### 3. Start an application
 
 ```bash
@@ -81,6 +116,13 @@ the three or four that matter here**. Cutting is what gives a CV focus.
 Two things make cutting safe: mark a section `{ignore}` and it stays in the
 file but off the CV, or wrap anything in an HTML comment. There's a `Scratch`
 section at the bottom of the template for exactly this.
+
+```markdown
+## Publications {ignore}          <- whole section kept in the file, off the CV
+
+- A bullet that stays.
+<!-- - A bullet cut for this application, kept in case I want it back. -->
+```
 
 ### 5. Build it
 
@@ -116,8 +158,16 @@ Paste the advert's requirements into `jobad.txt` (or into the log's
 `Necessary Criteria` cell), then:
 
 ```bash
+# from the jobad.txt file in the application folder
 python3 cv_criteria_check.py applications/2026-10_acme_data-analyst/cv.md \
     --criteria applications/2026-10_acme_data-analyst/jobad.txt
+
+# or from the criteria you pasted into the log, no --criteria needed
+python3 cv_criteria_check.py applications/2026-10_acme_data-analyst/cv.md
+
+# or look the row up by company instead of by file
+python3 cv_criteria_check.py applications/2026-10_acme_data-analyst/cv.md \
+    --company "Acme Ltd"
 ```
 
 The useful part is the last block:
@@ -155,6 +205,10 @@ a text editor.
 Then fill in `Outcome` and `Date of outcome` in `application_log.csv` as
 things happen. It's ordinary CSV — open it in Excel, Numbers or Sheets.
 
+```bash
+open application_log.csv      # macOS; opens in Numbers or Excel
+```
+
 ---
 
 ## Page fitting, and what it won't do
@@ -180,7 +234,20 @@ professional body font size (10.0pt / 13.3px)... At 10.0pt it actually needs
 That is the tool telling you to cut content or accept another page. It will
 not quietly make your CV unreadable to hit a target.
 
-Paper defaults to **A4**; pass `--paper letter` for US applications.
+Paper defaults to **A4**. For US applications:
+
+```bash
+python3 cv_build.py applications/2026-10_acme --max-pages 2 --pdf --paper letter
+```
+
+### Using the fitter on its own
+
+`cv_optimiser.py` also works on a hand-written HTML CV that uses this
+toolkit's classes, if you'd rather not use the markdown pipeline:
+
+```bash
+python3 cv_optimiser.py my_existing_cv.html --max-pages 2
+```
 
 ---
 
@@ -262,7 +329,13 @@ working one. One font tested during development failed with
 pdffonts applications/2026-10_acme/cv.pdf
 ```
 
-That lists what genuinely made it into the PDF. `cv_addfont.py` runs the same
+That lists what genuinely made it into the PDF. `pdffonts` isn't built into
+macOS — it comes with poppler:
+
+```bash
+brew install poppler          # macOS
+sudo apt install poppler-utils # Debian/Ubuntu
+``` `cv_addfont.py` runs the same
 check before embedding, and repairs the common breakages, but confirming the
 final output costs nothing.
 
@@ -300,7 +373,29 @@ and re-saving it is the one way to lose an edit.
 | `cv_criteria_check.py` | Reports which of a job's requirements your CV evidences |
 | `cv_addfont.py` | Validates, repairs, embeds and registers a font |
 
-Run any of them with `--help` for its full options.
+Run any of them with `--help` for its full options — note the `.py`, since
+`python3` wants a filename rather than a module name:
+
+```bash
+python3 cv_new.py --help
+python3 cv_build.py --help
+python3 cv_optimiser.py --help
+python3 cv_letter.py --help
+python3 cv_criteria_check.py --help
+python3 cv_addfont.py --help
+```
+
+Run them from inside the toolkit folder, or give a full path — otherwise
+Python won't find the file.
+
+### Keeping up to date
+
+```bash
+git pull
+```
+
+Your own content is git-ignored, so pulling updates the scripts without
+touching `full_cv.md`, `applications/` or your log.
 
 ---
 
@@ -315,9 +410,16 @@ unstyled CV, because unstyled HTML renders at browser-default sizes and
 silently becomes a twenty-page document. Keep the scripts and the stylesheet
 together.
 
-**A `.gitignore` that does nothing** — if you created it in TextEdit, use
-Format → Make Plain Text. TextEdit otherwise saves `.gitignore.rtf`, which
-git ignores completely.
+**"can't open file '.../cv_new': No such file or directory"** — you left off
+the `.py`. It's `python3 cv_new.py`, not `python3 cv_new`. The same error
+appears if you're not in the toolkit folder: `cd` there first.
+
+**"No module named 'yaml'"** — install it into the Python you're actually
+using: `python3 -m pip install pyyaml`.
+
+**"command not found: pdffonts"** — that one is optional and comes from
+poppler (`brew install poppler`). Nothing in the build needs it; it's only
+for checking which fonts embedded.
 
 ---
 
