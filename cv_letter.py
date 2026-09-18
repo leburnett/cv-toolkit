@@ -119,7 +119,10 @@ def render_paragraph(text: str) -> str:
 def resolve_date(header: dict) -> str:
     value = header.get("date")
     if value is None:
-        return _dt.date.today().strftime("%-d %B %Y")
+        # Not strftime("%-d ..."): the no-padding flag is a Unix extension
+        # and raises ValueError on Windows.
+        today = _dt.date.today()
+        return f"{today.day} {today:%B %Y}"
     if str(value).strip().lower() in ("none", "false", ""):
         return ""
     return str(value)

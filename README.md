@@ -39,6 +39,65 @@ python3 -m pip install pyyaml
 (`python3 -m pip` rather than plain `pip` — it guarantees you install into
 the same Python you'll run the scripts with.)
 
+### Versions
+
+Developed and tested on:
+
+| | Version tested |
+|---|---|
+| macOS | 26.6.2 (build 25G83), Apple Silicon (arm64) |
+| Python | 3.11.6 |
+| PyYAML | 6.0.3 |
+| Google Chrome | 152.0.7977.65 |
+| fontTools *(optional)* | 4.56.0 |
+| poppler / `pdffonts` *(optional)* | 26.04.0 |
+| git | 2.43.0 |
+
+Minimums, and why they are what they are:
+
+- **Python 3.10** or newer. The scripts use `str | None` in type
+  annotations, which on 3.9 and earlier fails at import with
+  `TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'`.
+
+  **This one catches Mac users out.** macOS still ships Python 3.9.6 as
+  `/usr/bin/python3`, so if that is what your `python3` resolves to, most of
+  the toolkit will not run — confusingly, `cv_new.py` and `cv_addfont.py`
+  will, because they happen not to use that syntax. Check which one you have:
+
+  ```bash
+  python3 --version
+  which python3
+  ```
+
+  If it says 3.9, install a newer Python (`brew install python@3.12`, or
+  [python.org](https://www.python.org/downloads/), or pyenv) and make sure it
+  comes first on your `PATH`. Don't try to install packages into
+  `/usr/bin/python3` — macOS manages it and it is best left alone.
+- **Chrome 112** or newer. The scripts call `--headless=new`; older Chrome
+  only understands the original `--headless`. Any Chromium-based browser
+  works — pass it with `--chrome /path/to/binary` if it isn't found
+  automatically.
+- **PyYAML**, any recent version. Only used to read the `---` header block.
+- **fontTools** is optional, and only needed if `cv_addfont.py` has to repair
+  a malformed font. It will tell you to install it if that happens.
+- **poppler** is optional. It provides `pdffonts`, used only to check which
+  fonts embedded in a finished PDF. Nothing in the build depends on it.
+
+### Other platforms
+
+**Only tested on macOS.** Linux should work: Chrome is looked up via
+`google-chrome`, `chromium` and `chromium-browser` on `PATH`, and nothing
+else is macOS-specific. Substitute `xdg-open` for `open` in the examples.
+
+**Windows is untested** and likely to need small changes. The scripts use
+`pathlib` throughout and avoid shell invocations, so there is no obvious
+blocker, but nobody has run it there. If you try it, the thing most likely
+to need attention is locating the Chrome executable.
+
+`open` in the examples below is the macOS command for "open this file in
+whatever app handles it". Use `xdg-open` on Linux, `start` on Windows, or
+just double-click the file.
+
 ### Check it works before you invest any time
 
 ```bash
@@ -415,7 +474,13 @@ the `.py`. It's `python3 cv_new.py`, not `python3 cv_new`. The same error
 appears if you're not in the toolkit folder: `cd` there first.
 
 **"No module named 'yaml'"** — install it into the Python you're actually
-using: `python3 -m pip install pyyaml`.
+using: `python3 -m pip install pyyaml`. If that doesn't fix it, you are
+probably running a different Python than the one you installed into; check
+with `which python3`.
+
+**"TypeError: unsupported operand type(s) for |"** — your Python is 3.9 or
+older, most likely macOS's built-in `/usr/bin/python3`. See *Versions* above.
+The giveaway is that `cv_new.py` works while `cv_build.py` doesn't.
 
 **"command not found: pdffonts"** — that one is optional and comes from
 poppler (`brew install poppler`). Nothing in the build needs it; it's only
