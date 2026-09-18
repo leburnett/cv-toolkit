@@ -2,7 +2,12 @@
 """
 cv_new.py — start a new application folder.
 
-    python3 cv_new.py 2026-10_acme_data-scientist
+    python3 cv_new.py 2026-10_acme_data-scientist   # name it yourself
+    python3 cv_new.py                                # or be asked
+
+Run with no argument and it asks for the company and role, then suggests a
+folder name following the YYYY-MM_company_role convention, which you can
+accept with Enter or type over.
 
 Creates applications/<name>/ containing:
 
@@ -23,6 +28,8 @@ and `mkdir` plus `cp cv_template.md .../cv.md` does the same job.
 """
 
 import argparse
+import datetime as _dt
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -66,16 +73,64 @@ JOBAD_SKELETON = """# Paste the job ad here, one criterion per line.
 """
 
 
+def slugify(text: str) -> str:
+    """'Acme Ltd & Co.' -> 'acme-ltd-co'"""
+    out = re.sub(r"[^a-z0-9]+", "-", (text or "").lower()).strip("-")
+    return re.sub(r"-{2,}", "-", out)
+
+
+def suggest_name(company: str, role: str) -> str:
+    """The YYYY-MM_company_role convention, built for you."""
+    parts = [_dt.date.today().strftime("%Y-%m"), slugify(company)]
+    if slugify(role):
+        parts.append(slugify(role))
+    return "_".join(p for p in parts if p)
+
+
+def ask(prompt: str, default: str = "") -> str:
+    shown = f"{prompt} [{default}]: " if default else f"{prompt}: "
+    try:
+        answer = input(shown).strip()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        sys.exit("Cancelled.")
+    return answer or default
+
+
+def prompt_for_details() -> tuple[str, str, str]:
+    """Interactive fallback when no folder name is given on the command line."""
+    print("New application (press Ctrl-C to cancel)\n")
+    company = ""
+    while not company:
+        company = ask("Company")
+        if not company:
+            print("  A company name is needed to suggest a folder name.")
+    role = ask("Role (optional)")
+    suggested = suggest_name(company, role)
+    name = ask("Folder name", suggested)
+    return name, company, role
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("name", help="Folder name, e.g. 2026-10_acme_data-scientist")
+    ap.add_argument("name", nargs="?", default=None,
+                    help="Folder name, e.g. 2026-10_acme_data-scientist. "
+                         "Omit it and you'll be asked.")
     ap.add_argument("--force", action="store_true", help="Add missing files to an existing folder")
     args = ap.parse_args()
 
     if not TEMPLATE.exists():
         sys.exit(f"Can't find {TEMPLATE.name} in {TOOLKIT_DIR}.")
 
-    folder = APPLICATIONS / args.name
+    company = role = ""
+    name = args.name
+    if name is None:
+        if not sys.stdin.isatty():
+            sys.exit("No folder name given. Pass one as an argument, or run this "
+                     "interactively to be prompted.")
+        name, company, role = prompt_for_details()
+
+    folder = APPLICATIONS / name
     if folder.exists() and not args.force:
         sys.exit(f"{folder} already exists. Use --force to fill in missing files, "
                  f"or pick another name.")
@@ -101,8 +156,13 @@ def main():
         print(f"Left alone (already there): {', '.join(skipped)}")
     print()
     print("Next:")
-    print(f"  1. Tailor {rel}/cv.md — paste bullets from the master doc, cut the rest")
-    print(f"  2. python3 cv_build.py {rel} --max-pages 2 --pdf")
+    print(f"  1. Tailor {rel}/cv.md — paste bullets from full_cv.md, cut the rest")
+    log_flags = ""
+    if company:
+        log_flags += f' --log-company "{company}"'
+    if role:
+        log_flags += f' --log-role "{role}"'
+    print(f"  2. python3 cv_build.py {rel} --max-pages 2 --pdf{log_flags}")
     print(f"  3. python3 cv_criteria_check.py {rel}/cv.md --criteria {rel}/jobad.txt")
     print(f"  4. python3 cv_letter.py {rel}")
 

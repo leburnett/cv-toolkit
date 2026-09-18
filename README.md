@@ -157,14 +157,41 @@ open -e cv_template.md     # macOS TextEdit; any plain-text editor is fine
 
 ### 3. Start an application
 
+You don't create the folder yourself — `cv_new.py` does it. Either name it
+on the command line:
+
 ```bash
 python3 cv_new.py 2026-10_acme_data-analyst
 ```
 
-That creates `applications/2026-10_acme_data-analyst/` holding `cv.md` (a copy
-of the template), a `cover-letter.md` skeleton, and an empty `jobad.txt`.
-Naming folders `YYYY-MM_company_role` keeps them sorted and self-explanatory a
-year later.
+…or run it with no argument and answer two questions:
+
+```bash
+python3 cv_new.py
+```
+```
+New application (press Ctrl-C to cancel)
+
+Company: Acme Ltd
+Role (optional): Data Analyst
+Folder name [2026-10_acme-ltd_data-analyst]:
+```
+
+Press Enter to accept the suggested name or type your own. The suggestion
+follows the `YYYY-MM_company_role` convention, which keeps the folder sorted
+and self-explanatory a year later.
+
+Either way you get `applications/<name>/` holding:
+
+```
+cv.md             a copy of cv_template.md, ready to tailor
+cover-letter.md   a skeleton letter
+jobad.txt         paste the advert here, for the criteria check
+```
+
+If you answered the prompts, the "next steps" it prints have
+`--log-company` and `--log-role` already filled in, so the log gets populated
+without you retyping them.
 
 ### 4. Tailor it
 
@@ -250,6 +277,20 @@ lines.
 ```bash
 python3 cv_letter.py applications/2026-10_acme_data-analyst
 ```
+
+**There is no required format.** No headings, no front matter, no particular
+sections — whatever you write comes out as paragraphs. Given a folder it
+looks for `cover-letter.md`; if there's exactly one `.md` in the folder it
+uses that whatever it's called; and you can always point it at a file
+directly, anywhere on disk:
+
+```bash
+python3 cv_letter.py path/to/any-letter.md
+```
+
+The PDF is written beside the source file. An optional `---` header can set
+`date:`, or `name:` for a letterhead matching the CV — see
+`python3 cv_letter.py --help`.
 
 That produces a PDF in the same typeface as the CV, so the pair look like a
 set. If you are pasting into an email instead, skip this — the markdown is
