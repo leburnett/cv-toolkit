@@ -16,6 +16,13 @@ python3 cv_new.py 2026-10_acme_data-analyst
 python3 cv_build.py applications/2026-10_acme_data-analyst --max-pages 2 --pdf
 ```
 
+<img src="assets/example_cv.png" width="560"
+     alt="A CV rendered by the toolkit: name and headline at the top, then Profile, Core Skills, Experience, Additional Experience, Education, Publications, Awards and References sections, laid out on a single page.">
+
+*The unedited `cv_template.md`, built straight out of the box. The
+placeholder text is what you replace; the layout, spacing and type sizes are
+worked out for you.*
+
 ### Requirements
 
 Python 3.10+, PyYAML, and Google Chrome (or any Chromium build). Chrome is
