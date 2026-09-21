@@ -154,10 +154,11 @@ class TestPageBudget:
         assert "@page{size:letter;margin:0.5in 0.5in;}" in out.read_text(encoding="utf-8")
         assert "clamping to 0.5in" in result.stderr
 
-    def test_the_clamp_warning_is_printed_exactly_once(self, toolkit_dir, tmp_path, chrome, cv_factory):
-        """cv_optimiser.py used to print its own copy of this warning as
-        well. Now that optimise() owns it, running the fitter directly must
-        still say it once — not twice, and not zero times."""
+    def test_typography_warnings_are_printed_exactly_once(self, toolkit_dir, tmp_path,
+                                                           chrome, cv_factory):
+        """cv_optimiser.py used to print its own copies of these warnings.
+        Now that optimise() owns them, running the fitter directly must
+        still say each once — not twice, and not zero times."""
         html = tmp_path / "cv.html"
         prepared = build(toolkit_dir, cv_factory(entries=14, bullets=4), html, "--no-optimise")
         assert prepared.returncode == 0, prepared.stderr
@@ -165,12 +166,22 @@ class TestPageBudget:
         result = subprocess.run(
             [sys.executable, str(toolkit_dir / "cv_optimiser.py"), str(html),
              "--max-pages", "1", "--margin-in", "0.1", "--side-margin-in", "0.1",
-             "--target-pt", "10", "--min-pt", "10", "--no-log"],
+             "--target-pt", "8", "--min-pt", "8", "--no-log"],
             capture_output=True, text=True, timeout=300)
         assert result.stderr.count("clamping to 0.5in") == 1, result.stderr
+        assert result.stderr.count("below the 10pt professional minimum") == 1, result.stderr
 
-    def test_a_legal_margin_is_not_warned_about(self, toolkit_dir, tmp_path, chrome, cv_factory):
-        """Cheap to get wrong in the other direction: a normal margin must
+    def test_type_below_the_professional_floor_is_warned_about(self, toolkit_dir, tmp_path,
+                                                                chrome, cv_factory):
+        """--min-pt 8 is honoured, not clamped — but cv_build.py must say
+        so rather than quietly setting a CV in 8pt type."""
+        out = tmp_path / "cv.html"
+        result = build(toolkit_dir, cv_factory(entries=14, bullets=4), out,
+                       "--max-pages", "1", "--target-pt", "8", "--min-pt", "8")
+        assert "below the 10pt professional minimum" in result.stderr
+
+    def test_normal_settings_are_not_warned_about(self, toolkit_dir, tmp_path, chrome, cv_factory):
+        """Cheap to get wrong in the other direction: the defaults must
         stay silent. Uses content too big to fit, which fails fast at the
         first render instead of running the full binary search."""
         out = tmp_path / "cv.html"
@@ -178,6 +189,7 @@ class TestPageBudget:
                        "--max-pages", "1", "--margin-in", "0.75",
                        "--target-pt", "10", "--min-pt", "10")
         assert "clamping" not in result.stderr
+        assert "professional minimum" not in result.stderr
 
 
 @pytest.mark.slow

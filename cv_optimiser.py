@@ -522,9 +522,14 @@ def optimise(input_path: Path, output: Path | None = None, max_pages: int = 1,
     the content did not fit even at min_pt; the file is still written (tightest
     possible) and "pages" says how many it actually needs.
     """
-    # Warn here rather than in main(), because this is where the clamping
-    # happens: every caller then reports it identically, instead of
-    # cv_build.py silently ignoring a margin you asked for.
+    # Both typography warnings live here rather than in main(), because
+    # this is where the floors are applied: every caller then reports them
+    # identically, instead of cv_build.py quietly accepting settings that
+    # cv_optimiser.py would have queried.
+    if min_pt < 10.0:
+        print(f"WARNING: a {min_pt}pt floor is below the 10pt professional minimum for "
+              f"printed body text. Proceeding anyway, but this is not recommended.",
+              file=sys.stderr)
     if margin_in < 0.5 or side_margin_in < 0.5:
         print("WARNING: margins below 0.5in risk clipped text in ATS parsing and print "
               "trimming; clamping to 0.5in.", file=sys.stderr)
@@ -609,10 +614,8 @@ def main():
     ap.add_argument("--log-deadline", default=None, help="Fill the Application deadline column for this CV")
     args = ap.parse_args()
 
-    if args.min_pt < 10.0:
-        print(f"WARNING: --min-pt {args.min_pt} is below the 10pt professional floor for printed "
-              f"body text. Proceeding anyway, but this is not recommended.", file=sys.stderr)
-    # The margin warning lives in optimise(), beside the clamping itself.
+    # The --min-pt and margin warnings live in optimise(), beside the
+    # floors they describe, so every script that calls it says the same.
 
     result = optimise(
         args.input, args.output, args.max_pages, args.target_pt, args.min_pt,

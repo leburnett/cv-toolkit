@@ -2,12 +2,15 @@
 
 [![CI](https://github.com/leburnett/cv-toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/leburnett/cv-toolkit/actions/workflows/ci.yml)
 
-Write your CV content once in markdown. Generate a tailored, correctly-fitted
-PDF per job application. Check it against the job advert. Keep a record of
-what you sent where.
+### Python CLI tool to help create formatted CVs tailored for each job application and keep track of applications in a log. 
 
-**Content lives in markdown; presentation is handled by the scripts.** You
-never hand-edit HTML or nudge font sizes to make something fit on the page.
+**Workflow outline:**
+- Compile your `full_cv_example.md`. 
+<br>  This should contain all possible information that might be useful to add to a CV for any job you are applying for.
+- Create a new folder within the `applications` folder by running `python3 cv_new.py`.
+- Mofidy the template CV, `cv.md`, within the newly-generated folder by copying over the relevent elements from `full_cv_example.md`. 
+- Use the function `cv_build.py` to convert the markdown file into a formatted PDF.
+- Details about this application will automatically be added to `application_log.csv`.
 
 ```bash
 git clone https://github.com/leburnett/cv-toolkit.git
@@ -96,17 +99,15 @@ Minimums, and why they are what they are:
 
 ### Other platforms
 
-**Developed on macOS.** Every push also runs the test suite on Ubuntu
-(including full builds through headless Chrome) and the unit tests on
-Windows, so those are known to work even though day-to-day use is on a Mac.
-Chrome is looked up via `google-chrome`, `chromium` and `chromium-browser`
-on `PATH`, and nothing else is macOS-specific. Substitute `xdg-open` for
-`open` in the examples.
+**Developed on macOS.** Every push also runs the test suite on Ubuntu —
+including full builds through headless Chrome — and the unit tests on
+Windows, so both are known to work. The scripts use `pathlib` throughout
+and avoid shell invocations, so nothing else is macOS-specific.
 
-**Windows is untested** and likely to need small changes. The scripts use
-`pathlib` throughout and avoid shell invocations, so there is no obvious
-blocker, but nobody has run it there. If you try it, the thing most likely
-to need attention is locating the Chrome executable.
+Chrome is looked up via `google-chrome`, `chromium` and `chromium-browser`
+on `PATH`; pass `--chrome /path/to/binary` if yours isn't found. On Windows
+that is the most likely thing to need pointing at by hand, since the
+Chrome-dependent builds aren't exercised there in CI.
 
 `open` in the examples below is the macOS command for "open this file in
 whatever app handles it". Use `xdg-open` on Linux, `start` on Windows, or
