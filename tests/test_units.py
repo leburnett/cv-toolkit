@@ -115,10 +115,13 @@ class TestApplicationLog:
 
     def test_user_added_columns_and_notes_survive_a_rebuild(self, tmp_path):
         log = tmp_path / "log.csv"
-        log.write_text(
-            "CV file used,Company,My Own Column\n"
-            'applications/a/cv.html,Acme,"a note\nover two lines"\n',
-            encoding="utf-8")
+        # newline="" so the embedded newline stays "\n" on Windows too;
+        # write_text would translate it to "\r\n" and the assertion below
+        # would then be testing Python's line-ending translation, not the
+        # log's behaviour.
+        with log.open("w", newline="", encoding="utf-8") as fh:
+            fh.write("CV file used,Company,My Own Column\n"
+                     'applications/a/cv.html,Acme,"a note\nover two lines"\n')
         cv_optimiser.update_application_log(log, "applications/a/cv.html")
         rows = list(csv.DictReader(log.open(newline="", encoding="utf-8")))
         assert rows[0]["My Own Column"] == "a note\nover two lines"
@@ -326,13 +329,27 @@ def test_render_html_includes_the_name_and_stylesheet():
     assert "mailto:a@example.com" in html
 
 
+def _href_target(href: str, out: Path) -> Path:
+    """Where a stylesheet href actually points.
+
+    Usually a relative path. On Windows it can be a file:// URI instead:
+    os.path.relpath refuses to relate two paths on different drives, and
+    the repo and the temp directory often sit on different ones there.
+    """
+    if href.startswith("file:"):
+        from urllib.parse import unquote, urlparse
+        path = unquote(urlparse(href).path)
+        return Path(path.lstrip("/") if re.match(r"/[A-Za-z]:", path) else path)
+    return out.resolve().parent / href
+
+
 class TestStylesheetHref:
     def test_resolves_back_to_the_real_stylesheet(self, tmp_path, toolkit_dir):
         """Regression: a CV built into applications/ used a bare relative
         href, lost all styling, and silently rendered as a 20-page CV."""
         out = tmp_path / "deep" / "cv.html"
         href = cv_build.stylesheet_href(out)
-        assert (out.resolve().parent / href).resolve() == (toolkit_dir / "cv_styles.css")
+        assert _href_target(href, out).resolve() == (toolkit_dir / "cv_styles.css")
 
     def test_a_sibling_output_gets_a_bare_name(self, toolkit_dir):
         assert cv_build.stylesheet_href(toolkit_dir / "cv.html") == "cv_styles.css"
