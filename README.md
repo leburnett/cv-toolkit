@@ -1,5 +1,7 @@
 # cv-toolkit
 
+[![CI](https://github.com/leburnett/cv-toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/leburnett/cv-toolkit/actions/workflows/ci.yml)
+
 Write your CV content once in markdown. Generate a tailored, correctly-fitted
 PDF per job application. Check it against the job advert. Keep a record of
 what you sent where.
@@ -57,6 +59,7 @@ Developed and tested on:
 | PyYAML | 6.0.3 |
 | Google Chrome | 152.0.7977.65 |
 | fontTools *(optional)* | 4.56.0 |
+| pytest *(optional)* | 9.1.1 |
 | poppler / `pdffonts` *(optional)* | 26.04.0 |
 | git | 2.43.0 |
 
@@ -89,12 +92,16 @@ Minimums, and why they are what they are:
   a malformed font. It will tell you to install it if that happens.
 - **poppler** is optional. It provides `pdffonts`, used only to check which
   fonts embedded in a finished PDF. Nothing in the build depends on it.
+- **pytest** is optional, and only needed to run the [tests](#tests).
 
 ### Other platforms
 
-**Only tested on macOS.** Linux should work: Chrome is looked up via
-`google-chrome`, `chromium` and `chromium-browser` on `PATH`, and nothing
-else is macOS-specific. Substitute `xdg-open` for `open` in the examples.
+**Developed on macOS.** Every push also runs the test suite on Ubuntu
+(including full builds through headless Chrome) and the unit tests on
+Windows, so those are known to work even though day-to-day use is on a Mac.
+Chrome is looked up via `google-chrome`, `chromium` and `chromium-browser`
+on `PATH`, and nothing else is macOS-specific. Substitute `xdg-open` for
+`open` in the examples.
 
 **Windows is untested** and likely to need small changes. The scripts use
 `pathlib` throughout and avoid shell invocations, so there is no obvious
@@ -527,6 +534,41 @@ git pull
 
 Your own content is git-ignored, so pulling updates the scripts without
 touching `full_cv.md`, `applications/` or your log.
+
+---
+
+## Tests
+
+Useful if you change the scripts, and the same checks run automatically on
+every push via GitHub Actions.
+
+```bash
+python3 -m pip install pytest
+python3 -m pytest
+```
+
+There are two layers, split by how long they take:
+
+| | What it covers | Time |
+|---|---|---|
+| **Unit** | Page counting, the log, markdown parsing, the type scale, criteria matching | under a second |
+| **End-to-end** | Real builds through headless Chrome: markdown in, measured PDF out | about a minute |
+
+While editing, run the fast layer on its own:
+
+```bash
+python3 -m pytest -m "not slow"
+```
+
+The end-to-end tests skip themselves if Chrome isn't installed, and they
+always write into a temporary directory — running the suite never touches
+`applications/`, `full_cv.md` or your log.
+
+A few of them exist because something specific once went wrong, and the
+comment in each says which: a 19-page PDF that reported 2 pages, a CV built
+into a subfolder that silently lost its stylesheet, an application log where
+every `cv.html` overwrote the last one's row. If you are adding a test, that
+is the kind worth adding.
 
 ---
 

@@ -19,5 +19,6 @@ fonts/fonts.json
 .claude/
 __pycache__/
 *.pyc
+.pytest_cache/
 .DS_Store
-._cv_optimizer_probe.html
+._cv_optimiser_probe.html
