@@ -522,7 +522,12 @@ def optimise(input_path: Path, output: Path | None = None, max_pages: int = 1,
     the content did not fit even at min_pt; the file is still written (tightest
     possible) and "pages" says how many it actually needs.
     """
+    # Warn here rather than in main(), because this is where the clamping
+    # happens: every caller then reports it identically, instead of
+    # cv_build.py silently ignoring a margin you asked for.
     if margin_in < 0.5 or side_margin_in < 0.5:
+        print("WARNING: margins below 0.5in risk clipped text in ATS parsing and print "
+              "trimming; clamping to 0.5in.", file=sys.stderr)
         margin_in, side_margin_in = max(margin_in, 0.5), max(side_margin_in, 0.5)
 
     chrome_bin = find_chrome(chrome)
@@ -607,9 +612,7 @@ def main():
     if args.min_pt < 10.0:
         print(f"WARNING: --min-pt {args.min_pt} is below the 10pt professional floor for printed "
               f"body text. Proceeding anyway, but this is not recommended.", file=sys.stderr)
-    if args.margin_in < 0.5 or args.side_margin_in < 0.5:
-        print("WARNING: margins below 0.5in risk clipped text in ATS parsing and print trimming; "
-              "clamping to 0.5in.", file=sys.stderr)
+    # The margin warning lives in optimise(), beside the clamping itself.
 
     result = optimise(
         args.input, args.output, args.max_pages, args.target_pt, args.min_pt,
