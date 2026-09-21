@@ -60,7 +60,7 @@ def built(toolkit_dir, tmp_path_factory, chrome):
     # Deliberately nested: a CV built into a subdirectory is the case that
     # once lost its stylesheet and silently rendered as 20 pages.
     out = tmp_path_factory.mktemp("template") / "nested" / "cv.html"
-    result = build(toolkit_dir, toolkit_dir / "cv_template.md", out,
+    result = build(toolkit_dir, toolkit_dir / "cv_template.example.md", out,
                    "--max-pages", "1", "--pdf")
     assert result.returncode == 0, result.stderr
     return result, out
@@ -148,7 +148,7 @@ class TestPageBudget:
         ignoring the margin you asked for.
         """
         out = tmp_path / "cv.html"
-        result = build(toolkit_dir, toolkit_dir / "cv_template.md", out, "--max-pages", "1",
+        result = build(toolkit_dir, toolkit_dir / "cv_template.example.md", out, "--max-pages", "1",
                        "--paper", "letter", "--margin-in", "0.1", "--side-margin-in", "0.1")
         assert result.returncode == 0, result.stderr
         assert "@page{size:letter;margin:0.5in 0.5in;}" in out.read_text(encoding="utf-8")
@@ -274,3 +274,53 @@ class TestNewApplication:
         with pytest.raises(SystemExit) as exc:
             cv_new.main()
         assert "No folder name given" in str(exc.value)
+
+    # -- choosing between your template and the shipped example -----------
+
+    def test_prefers_your_own_template(self, tmp_path, monkeypatch):
+        mine = tmp_path / "cv_template.md"
+        mine.write_text("---\nname: My Real Name\n---\n\n## Profile\n\nmine\n",
+                        encoding="utf-8")
+        monkeypatch.setattr(cv_new, "TEMPLATE", mine)
+        monkeypatch.setattr(sys, "argv", ["cv_new.py", "acme"])
+        cv_new.main()
+        assert "My Real Name" in (
+            tmp_path / "applications" / "acme" / "cv.md").read_text(encoding="utf-8")
+
+    def test_falls_back_to_the_example_and_says_so(self, tmp_path, monkeypatch, capsys):
+        """A fresh clone has no cv_template.md — it is git-ignored, so it
+        is never checked out. Using the example silently would leave
+        someone wondering why their own details weren't picked up."""
+        # Correctly named but absent, as on a fresh clone.
+        monkeypatch.setattr(cv_new, "TEMPLATE", tmp_path / "cv_template.md")
+        monkeypatch.setattr(sys, "argv", ["cv_new.py", "acme"])
+        cv_new.main()
+
+        assert (tmp_path / "applications" / "acme" / "cv.md").exists()
+        out = capsys.readouterr().out
+        assert "cv_template.example.md" in out
+        assert "cp cv_template.example.md cv_template.md" in out
+
+    def test_fails_clearly_when_neither_template_exists(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(cv_new, "TEMPLATE", tmp_path / "nope.md")
+        monkeypatch.setattr(cv_new, "TEMPLATE_EXAMPLE", tmp_path / "also-nope.md")
+        monkeypatch.setattr(sys, "argv", ["cv_new.py", "acme"])
+        with pytest.raises(SystemExit) as exc:
+            cv_new.main()
+        assert "Can't find" in str(exc.value)
+
+    def test_your_template_is_git_ignored(self, toolkit_dir):
+        """The whole point of the split: editing your contact details into
+        cv_template.md must not stage them for commit."""
+        ignored = subprocess.run(
+            ["git", "check-ignore", "cv_template.md", "full_cv.md"],
+            cwd=toolkit_dir, capture_output=True, text=True)
+        assert ignored.returncode == 0
+        assert set(ignored.stdout.split()) == {"cv_template.md", "full_cv.md"}
+
+    def test_the_example_templates_are_tracked(self, toolkit_dir):
+        tracked = subprocess.run(
+            ["git", "ls-files", "cv_template.example.md", "full_cv.example.md"],
+            cwd=toolkit_dir, capture_output=True, text=True)
+        assert set(tracked.stdout.split()) == {
+            "cv_template.example.md", "full_cv.example.md"}

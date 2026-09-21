@@ -1,5 +1,9 @@
 # Your CV content stays on your machine. The toolkit is the shared part.
+# Both of these start as the tracked .example.md file beside them; copying
+# rather than editing in place keeps your name and contact details out of
+# git, and stops `git pull` colliding with your own edits.
 full_cv.md
+cv_template.md
 application_log.csv
 applications/*
 !applications/.gitkeep

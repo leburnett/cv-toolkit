@@ -11,9 +11,12 @@ accept with Enter or type over.
 
 Creates applications/<name>/ containing:
 
-    cv.md             a copy of cv_template.md, ready to tailor
+    cv.md             a copy of your cv_template.md, ready to tailor
     cover-letter.md   a skeleton letter
     jobad.txt         paste the job ad here (used by cv_criteria_check.py)
+
+If you haven't made a cv_template.md of your own yet, the tracked
+cv_template.example.md is used instead and it says so.
 
 Then:
 
@@ -24,7 +27,7 @@ Then:
 
 Naming them YYYY-MM_company_role keeps the folder sorted and self-explanatory
 a year later. This script only copies files; there's nothing magic about it,
-and `mkdir` plus `cp cv_template.md .../cv.md` does the same job.
+and `mkdir` plus `cp cv_template.md .../cv.md` does most of the same job.
 """
 
 import argparse
@@ -35,8 +38,21 @@ import sys
 from pathlib import Path
 
 TOOLKIT_DIR = Path(__file__).resolve().parent
-TEMPLATE = TOOLKIT_DIR / "cv_template.md"
 APPLICATIONS = TOOLKIT_DIR / "applications"
+
+# cv_template.md is your own, and git-ignored, so that editing your name
+# and contact details into it never commits them. cv_template.example.md
+# is the tracked placeholder version. Prefer yours; fall back to the
+# example so a fresh clone works before you have made one.
+TEMPLATE = TOOLKIT_DIR / "cv_template.md"
+TEMPLATE_EXAMPLE = TOOLKIT_DIR / "cv_template.example.md"
+
+
+def find_template() -> Path:
+    for candidate in (TEMPLATE, TEMPLATE_EXAMPLE):
+        if candidate.exists():
+            return candidate
+    sys.exit(f"Can't find {TEMPLATE.name} or {TEMPLATE_EXAMPLE.name} in {TOOLKIT_DIR}.")
 
 LETTER_SKELETON = """<!--
 Cover letter. Write it as you'd write an email: a blank line starts a new
@@ -119,8 +135,7 @@ def main():
     ap.add_argument("--force", action="store_true", help="Add missing files to an existing folder")
     args = ap.parse_args()
 
-    if not TEMPLATE.exists():
-        sys.exit(f"Can't find {TEMPLATE.name} in {TOOLKIT_DIR}.")
+    template = find_template()
 
     company = role = ""
     name = args.name
@@ -138,7 +153,7 @@ def main():
 
     created, skipped = [], []
     targets = [
-        (folder / "cv.md", lambda p: shutil.copy2(TEMPLATE, p)),
+        (folder / "cv.md", lambda p: shutil.copy2(template, p)),
         (folder / "cover-letter.md",
          lambda p: p.write_text(LETTER_SKELETON.format(folder=folder.as_posix()), encoding="utf-8")),
         (folder / "jobad.txt", lambda p: p.write_text(JOBAD_SKELETON, encoding="utf-8")),
@@ -154,6 +169,11 @@ def main():
     print(f"Created {rel}/: {', '.join(created) if created else 'nothing new'}")
     if skipped:
         print(f"Left alone (already there): {', '.join(skipped)}")
+    if template == TEMPLATE_EXAMPLE and "cv.md" in created:
+        # Say so rather than letting someone wonder why their own details
+        # aren't in the new cv.md.
+        print(f"Used {TEMPLATE_EXAMPLE.name} (the placeholder one). To start from your "
+              f"own details instead: cp {TEMPLATE_EXAMPLE.name} {TEMPLATE.name}")
     print()
     print("Next:")
     print(f"  1. Tailor {rel}/cv.md — paste bullets from full_cv.md, cut the rest")

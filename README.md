@@ -5,26 +5,32 @@
 ### Python CLI tool to help create formatted CVs tailored for each job application and keep track of applications in a log. 
 
 **Workflow outline:**
-- Compile your `full_cv_example.md`. 
+- Compile your `full_cv.md`.
 <br>  This should contain all possible information that might be useful to add to a CV for any job you are applying for.
 - Create a new folder within the `applications` folder by running `python3 cv_new.py`.
-- Mofidy the template CV, `cv.md`, within the newly-generated folder by copying over the relevent elements from `full_cv_example.md`. 
+- Modify the template CV, `cv.md`, within the newly-generated folder by copying over the relevant elements from `full_cv.md`.
 - Use the function `cv_build.py` to convert the markdown file into a formatted PDF.
 - Details about this application will automatically be added to `application_log.csv`.
 
 ```bash
 git clone https://github.com/leburnett/cv-toolkit.git
 cd cv-toolkit
-cp full_cv.example.md full_cv.md          # your store of everything
+cp full_cv.example.md full_cv.md              # your store of everything
+cp cv_template.example.md cv_template.md      # your contact details
 python3 cv_new.py 2026-10_acme_data-analyst
 # edit applications/2026-10_acme_data-analyst/cv.md
 python3 cv_build.py applications/2026-10_acme_data-analyst --max-pages 2 --pdf
 ```
 
+Those two `cp` lines are the only setup. The `.example.md` files are shipped
+with the toolkit as a starting point; the copies you make are **git-ignored**,
+so your name, contact details and career history stay on your machine and
+`git pull` never collides with your edits.
+
 <img src="assets/example_cv.png" width="560"
      alt="A CV rendered by the toolkit: name and headline at the top, then Profile, Core Skills, Experience, Additional Experience, Education, Publications, Awards and References sections, laid out on a single page.">
 
-*The unedited `cv_template.md`, built straight out of the box. The
+*The unedited `cv_template.example.md`, built straight out of the box. The
 placeholder text is what you replace; the layout, spacing and type sizes are
 worked out for you.*
 
@@ -135,8 +141,8 @@ page. This splits those apart:
 
 | File | What it holds |
 |---|---|
-| `full_cv.md` | Everything you have ever done, plus several phrasings of each. Grows forever, never sent anywhere. |
-| `cv_template.md` | The facts that don't change — contact details, education — as the starting point for each application. |
+| `full_cv.md` | Everything you have ever done, plus several phrasings of each. Grows forever, never sent anywhere. Copied from `full_cv.example.md`, and git-ignored. |
+| `cv_template.md` | The facts that don't change — contact details, education — as the starting point for each application. Copied from `cv_template.example.md`, and git-ignored. |
 | `applications/<name>/` | One folder per job: the tailored content, and the PDFs built from it. |
 
 Tailoring an application becomes: copy the template, paste in the relevant
@@ -162,13 +168,19 @@ fork this repository.
 
 ### 2. Put your stable facts in the template
 
-Edit `cv_template.md` once: name, contact details, education, anything else
-that won't change between applications. Every new application starts as a copy
-of it, so you are trimming rather than filling in a blank form.
-
 ```bash
+cp cv_template.example.md cv_template.md
 open -e cv_template.md     # macOS TextEdit; any plain-text editor is fine
 ```
+
+Edit it once: name, contact details, education, anything else that won't
+change between applications. Every new application starts as a copy of it, so
+you are trimming rather than filling in a blank form.
+
+Copy rather than editing `cv_template.example.md` in place. The example is
+tracked by git; your `cv_template.md` is ignored, so your contact details
+never get committed — which matters if you fork this repository publicly. If
+you skip this step, `cv_new.py` falls back to the example and tells you so.
 
 ### 3. Start an application
 
@@ -199,7 +211,7 @@ and self-explanatory a year later.
 Either way you get `applications/<name>/` holding:
 
 ```
-cv.md             a copy of cv_template.md, ready to tailor
+cv.md             a copy of your cv_template.md, ready to tailor
 cover-letter.md   a skeleton letter
 jobad.txt         paste the advert here, for the criteria check
 ```

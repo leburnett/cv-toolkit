@@ -84,7 +84,7 @@ jobs:
       - name: Render the example CV
         if: always()
         run: |
-          python cv_build.py cv_template.md \
+          python cv_build.py cv_template.example.md \
             --out "${RUNNER_TEMP}/example_cv.html" --max-pages 1 --pdf --no-log
 
       - uses: actions/upload-artifact@v4
