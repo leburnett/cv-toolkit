@@ -86,6 +86,28 @@ ol.pubs b{font-weight:700;color:#242424;}
 .chip{border:1px solid var(--chip);border-radius:4px;padding:3px 8px;
   font-size:10.5px;color:#242424;}
 
+/* ---- skills grid: chip labels in a narrow left column, text on the right ----
+   The chip is a flex box so its label sits dead-centre however long it is, and
+   every chip in the column ends up the same height. Rows align to flex-start,
+   and cv_optimiser.py gives the chip a small margin-top so the top of its
+   border sits level with the top of the text beside it rather than floating
+   above it. Padding, font size and that offset are all set by the optimiser
+   so they scale with the rest of the page. ---- */
+.skillgrid{margin:3px 0 3px;}
+.skillrow{display:flex;gap:12px;align-items:flex-start;break-inside:avoid;}
+/* Wide enough for the longest label on one line — a wrapped chip is taller
+   than its neighbours and breaks the even row rhythm. */
+.skillkey{flex:0 0 132px;min-width:0;}
+.skillkey .chip{display:flex;align-items:center;justify-content:center;
+  width:100%;box-sizing:border-box;text-align:center;
+  border:1px solid var(--chip);border-radius:5px;background:#f7f9fb;
+  color:#242424;font-weight:500;line-height:1.2;}
+/* Helvetica Neue Light for the right-hand column. Weight 300 at this size
+   washes out against the #3a3a3a used elsewhere, so the colour is a shade
+   darker to keep the contrast even. */
+.skillval{flex:1 1 auto;min-width:0;color:#333;
+  font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:300;}
+
 /* ---- awards (sidebar) ---- */
 .award{font-size:10px;line-height:1.35;margin-bottom:6px;break-inside:avoid;}
 .award b{font-weight:500;color:#242424;}

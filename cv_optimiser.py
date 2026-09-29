@@ -328,14 +328,16 @@ def update_application_log(log_path: Path, cv_filename: str, date_str: str | Non
 # fill (0..1) linearly interpolates between them.
 # ---------------------------------------------------------------------------
 TIGHT = dict(
-    headline_mb=5, sec_mt=4, sec_mb=2, sec_pad=1, entry_mb=2, meta_mb=1,
+    headline_mb=5, sec_mt=8, sec_mb=3, sec_pad=1, entry_mb=2, meta_mb=1,
     sum_lh=1.15, sum_mb=2, metrics_mb=2, pub_mb=1, pub_lh=1.14,
     ul_mt=1, ul_mb=2, li_lh=1.12, li_mb=0, edu_mb=3, award_lh=1.2, award_mb=3,
+    skillrow_mb=2, chip_py=3.5,
 )
 LOOSE = dict(
-    headline_mb=8, sec_mt=9, sec_mb=5, sec_pad=2, entry_mb=12, meta_mb=3,
+    headline_mb=8, sec_mt=16, sec_mb=6, sec_pad=2, entry_mb=12, meta_mb=3,
     sum_lh=1.35, sum_mb=4, metrics_mb=4, pub_mb=4, pub_lh=1.32,
     ul_mt=2, ul_mb=3, li_lh=1.32, li_mb=3, edu_mb=7, award_lh=1.3, award_mb=7,
+    skillrow_mb=6, chip_py=7,
 )
 
 # Font sizes for every other labelled element, expressed as a ratio against
@@ -361,6 +363,18 @@ def build_style_block(body_pt: float, fill: float, margin_in: float,
     utility_css = font_utility_css()
     sizes = {k: round(body * r, 2) for k, r in FONT_RATIOS.items()}
     s = {k: interp(TIGHT[k], LOOSE[k], fill) for k in TIGHT}
+
+    # Skills-grid chip: slightly smaller than body text, and nudged down so the
+    # TOP of its border sits level with the top of the capitals in the first
+    # line beside it. A text line box is taller than its letters — the spare
+    # room is split above and below as half-leading — so a chip whose box
+    # simply starts at y=0 looks like it floats above the text. Dropping it by
+    # that half-leading puts the two tops on the same line. 0.72em is roughly
+    # Helvetica's cap height.
+    chip_fs = round(body * 0.92, 2)
+    chip_top_offset = max(0.0, (body * s["li_lh"] - body * 0.72) / 2)
+    # Contact-row icons, a touch smaller than the text they sit beside.
+    contact_icon = round(body * 0.76, 2)
 
     def px(v):
         return round(v, 2)
@@ -389,6 +403,16 @@ def build_style_block(body_pt: float, fill: float, margin_in: float,
     li{{line-height:{s['li_lh']:.3f};margin-bottom:{px(s['li_mb'])}px;font-size:{body}px;}}
     .list{{line-height:{s['li_lh']:.3f};}}
     .list li{{margin-bottom:{px(s['li_mb'])}px;}}
+    /* Skills grid: structural layout is in cv_styles.css, sizing scales here.
+       The chip's margin-top is computed, not guessed — see build_style_block. */
+    .skillrow{{margin-bottom:{px(s['skillrow_mb'])}px;line-height:{s['li_lh']:.3f};
+      font-size:{body}px;}}
+    .skillkey .chip{{font-size:{chip_fs}px;padding:{px(s['chip_py'])}px 8px;
+      margin-top:{chip_top_offset:.2f}px;}}
+    .skillval{{font-size:{round(body * 0.93, 2)}px;}}
+    .contact svg{{width:{contact_icon}px;height:{contact_icon}px;}}
+    .contact{{gap:{px(body * 0.22)}px {px(body * 0.78)}px;}}
+    .contact span{{gap:{px(body * 0.32)}px;}}
     /* Blue university names in Education, matching the .org colour */
     .uni{{color:var(--blue);}}
     .eduentry{{margin:0 0 {px(s['edu_mb'])}px;break-inside:avoid;}}
@@ -398,7 +422,16 @@ def build_style_block(body_pt: float, fill: float, margin_in: float,
     .iico{{width:11px;height:11px;fill:var(--gray);vertical-align:-1px;margin-right:3px;}}
     .mut{{color:var(--muted);}}
     .bitw{{font-size:{body}px;color:#3a3a3a;}}
-    .edesc{{font-size:{body}px;line-height:{s['li_lh']:.3f};color:#3a3a3a;margin-top:1px;}}
+    /* Entry lead-in line (a domain summary, a scope note). Set to match
+       .skillval — Helvetica Neue Light, a touch smaller than body — so
+       context reads as context and the bullets under it stay the content. */
+    .edesc{{font-size:{round(body * 0.93, 2)}px;line-height:{s['li_lh']:.3f};color:#333;
+      font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:300;
+      margin:1px 0 {px(s['meta_mb'] + 1)}px;}}
+    /* Lead-in marker. Scoped to .entry so Education's "Thesis:" line, which
+       uses the same class inside .eduentry, doesn't get one. */
+    .entry .edesc::before{{content:"›";color:var(--blue);margin-right:0.34em;
+      font-size:1.5em;font-weight:500;line-height:1;vertical-align:-0.09em;}}
     .award{{font-size:{sizes['meta']}px;line-height:{s['award_lh']:.3f};margin-bottom:{px(s['award_mb'])}px;}}
   </style>"""
 

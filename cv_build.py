@@ -80,6 +80,8 @@ annotation (or leave it off and the kind is inferred):
 Section kinds:
     prose      running paragraphs (the Profile)
     skills     one line of `·`-separated items, rendered italic
+    skillgrid  a `- **Label:** items` list, rendered as two columns: a narrow
+               left column of chip-style labels, a wide right column of text
     entries    `###` blocks with org/dates/location meta + bullets and/or prose
     education  same as entries, styled as education entries
     bullets    a `- ` list, `**bold leads**` supported
@@ -188,6 +190,10 @@ LIST_RE = re.compile(r"^\s*(?:[-*]|\d+[.)])\s+(.*)$")
 # allowed through, so a stray brace in your prose can't inject markup and a
 # typo shows up as a warning rather than silently doing nothing.
 SPAN_RE = re.compile(r"\[([^\]\n]+)\]\{((?:\s*\.[A-Za-z0-9_-]+)+)\s*\}")
+
+# `{skillgrid}` rows: "**Label:** value" or "**Label**: value". Group 1 is the
+# chip text for the narrow left column, group 2 the body for the wide right one.
+SKILLROW_RE = re.compile(r"\s*\*\*(.+?):?\*\*:?\s*(.*)$", re.S)
 _span_warned: set[str] = set()
 
 
@@ -218,7 +224,10 @@ def smart_quotes(text: str) -> str:
     """Straight quotes -> typographic quotes, so pasted text matches the
     hand-set look of the original CV without you having to type “ ” ’."""
     # Opening quote after start-of-string, whitespace, or an opening bracket.
-    text = re.sub(r'(^|[\s(\[{])"', r"\1“", text)
+    # The leading class includes * and _ so an emphasised title, *"Like this"*,
+    # still opens correctly: smart_quotes runs before the bold/italic passes,
+    # so the markers are still in the string at this point.
+    text = re.sub(r'(^|[\s(\[{*_])"', r"\1“", text)
     text = re.sub(r'"', "”", text)              # every other " closes
     text = re.sub(r"(^|[\s(\[{])'(?=\w)", r"\1‘", text)
     text = re.sub(r"'", "’", text)               # the rest are apostrophes
@@ -229,7 +238,10 @@ def inline(text: str) -> str:
     """Escape HTML, then apply **bold**, *italic*, [text](url), smart quotes.
 
     Links are pulled out first so a URL can't be mangled by the italic or
-    quote passes, then put back at the end.
+    quote passes, then put back at the end. A backslash-escaped asterisk
+    (`\\*`) is stashed the same way, so literal asterisks — "A\\*" for a starred
+    A-Level, a footnote marker — survive the bold and italic passes instead of
+    opening emphasis that never closes.
     """
     out = _html.escape(text.strip(), quote=False)
 
@@ -239,11 +251,13 @@ def inline(text: str) -> str:
         links.append((match.group(1), match.group(2)))
         return f"\x00LINK{len(links) - 1}\x00"
 
+    out = out.replace(r"\*", "\x00STAR\x00")
     out = re.sub(r"\[([^\]]+)\]\(([^)\s]+)\)", stash, out)
     out = smart_quotes(out)
     out = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", out)
     out = re.sub(r"(?<!\*)\*([^*\n]+?)\*(?!\*)", r"<i>\1</i>", out)
     out = SPAN_RE.sub(_span, out)
+    out = out.replace("\x00STAR\x00", "*")
     for index, (label, href) in enumerate(links):
         anchor = f'<a href="{_html.escape(href, quote=True)}">{smart_quotes(label)}</a>'
         out = out.replace(f"\x00LINK{index}\x00", anchor)
@@ -471,12 +485,15 @@ def render_entries(section: dict, education: bool = False) -> list[str]:
             row = meta_row(meta, org_cls)
             if row:
                 parts.append(row)
+        # Prose first, then bullets: an entry's paragraph is a lead-in that
+        # frames the bullets under it (a domain summary, a one-line scope
+        # note), so it has to sit above them to read correctly.
+        if ent.get("text"):
+            parts.append(f'        <div class="edesc">{inline(ent["text"])}</div>')
         if ent.get("items"):
             parts.append("        <ul>")
             parts += [f"          <li>{inline(i)}</li>" for i in ent["items"]]
             parts.append("        </ul>")
-        if ent.get("text"):
-            parts.append(f'        <div class="edesc">{inline(ent["text"])}</div>')
         parts.append("      </div>")
         out.append("\n".join(parts))
     return out
@@ -496,6 +513,23 @@ def render_section(section: dict) -> str:
     elif kind == "skills":
         body = section.get("text") or " · ".join(section.get("items", []))
         parts.append(f'      <p class="sgroup"><i>{inline(body)}</i></p>')
+    elif kind == "skillgrid":
+        if section.get("text"):
+            parts.append(f'      <p class="sum">{inline(section["text"])}</p>')
+        parts.append('      <div class="skillgrid">')
+        for item in section.get("items", []):
+            match = SKILLROW_RE.match(item)
+            label, value = (match.group(1), match.group(2)) if match else ("", item)
+            parts.append('        <div class="skillrow">')
+            if label:
+                parts.append(
+                    f'          <div class="skillkey"><span class="chip">{inline(label)}</span></div>'
+                )
+            else:
+                parts.append('          <div class="skillkey"></div>')
+            parts.append(f'          <div class="skillval">{inline(value)}</div>')
+            parts.append("        </div>")
+        parts.append("      </div>")
     elif kind in ("entries", "education"):
         if section.get("text"):
             parts.append(f'      <p class="sum">{inline(section["text"])}</p>')
