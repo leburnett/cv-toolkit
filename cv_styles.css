@@ -94,7 +94,7 @@ ol.pubs b{font-weight:700;color:#242424;}
    above it. Padding, font size and that offset are all set by the optimiser
    so they scale with the rest of the page. ---- */
 .skillgrid{margin:3px 0 3px;}
-.skillrow{display:flex;gap:12px;align-items:flex-start;break-inside:avoid;}
+.skillrow{display:flex;gap:12px;align-items:center;break-inside:avoid;}
 /* Wide enough for the longest label on one line — a wrapped chip is taller
    than its neighbours and breaks the even row rhythm. */
 .skillkey{flex:0 0 132px;min-width:0;}

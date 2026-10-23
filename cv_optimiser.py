@@ -345,7 +345,7 @@ LOOSE = dict(
 # visual hierarchy — name > headline > role > body > section-label — stays
 # consistent as body size changes).
 FONT_RATIOS = dict(
-    name=2.65, headline=1.22, contact=1.02, sec=0.97, role=1.14,
+    name=2.65, headline=1.22, contact=0.94, sec=0.97, role=1.14,
     meta=0.97, sum=1.05, pub=0.97, edutitle=1.08,
 )
 
@@ -364,17 +364,13 @@ def build_style_block(body_pt: float, fill: float, margin_in: float,
     sizes = {k: round(body * r, 2) for k, r in FONT_RATIOS.items()}
     s = {k: interp(TIGHT[k], LOOSE[k], fill) for k in TIGHT}
 
-    # Skills-grid chip: slightly smaller than body text, and nudged down so the
-    # TOP of its border sits level with the top of the capitals in the first
-    # line beside it. A text line box is taller than its letters — the spare
-    # room is split above and below as half-leading — so a chip whose box
-    # simply starts at y=0 looks like it floats above the text. Dropping it by
-    # that half-leading puts the two tops on the same line. 0.72em is roughly
-    # Helvetica's cap height.
+    # Skills-grid chip: slightly smaller than the body text it sits beside.
+    # The row centres the chip against its text (see cv_styles.css) rather
+    # than top-aligning it: a padded chip is taller than a single line, so
+    # top-aligning left a dead band under any one-line row.
     chip_fs = round(body * 0.92, 2)
-    chip_top_offset = max(0.0, (body * s["li_lh"] - body * 0.72) / 2)
     # Contact-row icons, a touch smaller than the text they sit beside.
-    contact_icon = round(body * 0.76, 2)
+    contact_icon = round(body * 0.70, 2)
 
     def px(v):
         return round(v, 2)
@@ -407,12 +403,11 @@ def build_style_block(body_pt: float, fill: float, margin_in: float,
        The chip's margin-top is computed, not guessed — see build_style_block. */
     .skillrow{{margin-bottom:{px(s['skillrow_mb'])}px;line-height:{s['li_lh']:.3f};
       font-size:{body}px;}}
-    .skillkey .chip{{font-size:{chip_fs}px;padding:{px(s['chip_py'])}px 8px;
-      margin-top:{chip_top_offset:.2f}px;}}
+    .skillkey .chip{{font-size:{chip_fs}px;padding:{px(s['chip_py'])}px 8px;}}
     .skillval{{font-size:{round(body * 0.93, 2)}px;}}
     .contact svg{{width:{contact_icon}px;height:{contact_icon}px;}}
-    .contact{{gap:{px(body * 0.22)}px {px(body * 0.78)}px;}}
-    .contact span{{gap:{px(body * 0.32)}px;}}
+    .contact{{gap:{px(body * 0.20)}px {px(body * 0.62)}px;}}
+    .contact span{{gap:{px(body * 0.26)}px;}}
     /* Blue university names in Education, matching the .org colour */
     .uni{{color:var(--blue);}}
     .eduentry{{margin:0 0 {px(s['edu_mb'])}px;break-inside:avoid;}}

@@ -26,3 +26,4 @@ __pycache__/
 .pytest_cache/
 .DS_Store
 ._cv_optimiser_probe.html
+application_log2.csv
